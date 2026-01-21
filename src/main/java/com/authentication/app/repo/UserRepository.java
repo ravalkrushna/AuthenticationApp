@@ -66,4 +66,21 @@ public class UserRepository {
         );
         return user;
     };
+
+    public Optional<UserDao> findById(Long id) {
+        return jdbcTemplate.query(
+                "select * from users where id = ?",
+                userRowMapper,
+                id
+        ).stream().findFirst();
+    }
+
+    public void updatePassword(Long id, String encodedPassword) {
+        jdbcTemplate.update(
+                "update users set password = ? where id = ?",
+                encodedPassword,
+                id
+        );
+    }
+
 }

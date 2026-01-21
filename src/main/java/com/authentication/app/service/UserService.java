@@ -78,18 +78,25 @@ public class UserService {
         return user;
     }
 
-    public void changePassword(String email , String oldPassword , String newPassword){
-        UserDao user = userRepo.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+    public void changePassword(
+            Long userId,
+            String oldPassword,
+            String newPassword) {
 
-        if(!passwordEncoder.matches(oldPassword , user.getPassword())){
-            throw new IllegalArgumentException("old password is incorrect");
-        }
-        if(passwordEncoder.matches(oldPassword , user.getPassword())){
-            throw new IllegalArgumentException("Password is same as before");
+        UserDao user = userRepo.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new IllegalArgumentException("Old password is incorrect");
         }
 
-        user.setPassword(passwordEncoder.encode(newPassword));
-        userRepo.saveUser(user);
+        if (passwordEncoder.matches(newPassword, user.getPassword())) {
+            throw new IllegalArgumentException("New password cannot be same as old");
+        }
+
+        String encoded = passwordEncoder.encode(newPassword);
+        userRepo.updatePassword(userId, encoded);
     }
-   
+
+
 }

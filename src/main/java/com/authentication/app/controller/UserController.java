@@ -1,6 +1,7 @@
 package com.authentication.app.controller;
 
 import com.authentication.app.model.dto.ChangePasswordRequest;
+import com.authentication.app.utils.SessionRegistry;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,67 +26,90 @@ import jakarta.validation.Valid;
 @RestController
 @RequestMapping("/users/auth")
 public class UserController {
-	
+
 	private final UserService userService;
-	
+
 	public UserController(UserService userService) {
 		this.userService = userService;
 	}
-	
+
 	@PostMapping("/signup")
-	public ResponseEntity<?> userSignup(@RequestBody RegisterRequest request) {
-	    try {
-	        userService.registerUser(request.getEmail(), request.getPassword());
-	        return ResponseEntity.ok("OTP sent successfully");
-	    } catch (IllegalArgumentException e) {
-	        return ResponseEntity.badRequest().body(e.getMessage());
-	    }
+	public ResponseEntity<?> signup(@RequestBody RegisterRequest request) {
+		userService.registerUser(request.getEmail(), request.getPassword());
+		return ResponseEntity.ok("OTP sent successfully");
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<String> userLogin(@Valid @RequestBody LoginRequest request , HttpServletRequest httprequest , HttpServletResponse response) {
-		UserDao user = userService.loginUser(request.getEmail(), request.getPassword());
-		SessionUtil.createSession(httprequest, user.getId());
-		
-		Cookie userCookie = new Cookie("USER_EMAIL",user.getEmail());
-		userCookie.setHttpOnly(true);
-		userCookie.setPath("/");
-		userCookie.setMaxAge(5 * 60);
-		response.addCookie(userCookie);
-		return ResponseEntity.ok("Login successful.");		
+	public ResponseEntity<String> login(
+			@Valid @RequestBody LoginRequest loginRequest,
+			HttpServletRequest httpRequest,
+			HttpServletResponse response) {
+
+		UserDao user = userService.loginUser(
+				loginRequest.getEmail(),
+				loginRequest.getPassword());
+
+		Long userId = user.getId();
+
+		if (!SessionRegistry.canLogin(userId)) {
+			return ResponseEntity
+					.status(403)
+					.body("Too many active sessions");
+		}
+
+		HttpSession session = httpRequest.getSession(true);
+		session.setAttribute("USER_ID", userId);
+
+		SessionRegistry.add(userId, session.getId());
+
+		Cookie cookie = new Cookie("USER_EMAIL", user.getEmail());
+		cookie.setHttpOnly(true);
+		cookie.setPath("/");
+		cookie.setMaxAge(10 * 60);
+		response.addCookie(cookie);
+
+		return ResponseEntity.ok("Login successful");
 	}
-	
+
 	@PostMapping("/verifyotp")
 	public ResponseEntity<String> verifyOtp(@Valid @RequestBody OtpRequest otp) {
 		userService.verifyOtp(otp.getEmail(), otp.getOtp());
-		return ResponseEntity.ok("Email verified successfully.");
+		return ResponseEntity.ok("Email verified successfully");
 	}
-	
+
 	@GetMapping("/session-check")
 	public ResponseEntity<String> sessionCheck(HttpSession session) {
-
-	    if (session.getAttribute("USER_ID") == null) {
-	        return ResponseEntity.status(401).body("No active session");
-	    }
-
-	    return ResponseEntity.ok("Session active");
+		if (session.getAttribute("USER_ID") == null) {
+			return ResponseEntity.status(401).body("No active session");
+		}
+		return ResponseEntity.ok("Session active");
 	}
 
 	@GetMapping("/read-cookie")
 	public ResponseEntity<String> readCookie(
-	        @CookieValue(value = "USER_EMAIL", required = false) String email) {
+			@CookieValue(value = "USER_EMAIL", required = false) String email) {
 
-	    if (email == null) {
-	        return ResponseEntity.status(401).body("Cookie not found");
-	    }
-
-	    return ResponseEntity.ok("Cookie value: " + email);
+		if (email == null) {
+			return ResponseEntity.status(401).body("Cookie not found");
+		}
+		return ResponseEntity.ok("Cookie value: " + email);
 	}
 
 	@PostMapping("/change-password")
-	public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request , HttpSession session){
-		String email = session .getAttribute("USER_EMAIL").toString();
-		userService.changePassword(email, request.getOldPassword(), request.getNewPassword());
-		return ResponseEntity.ok("Password changed successfully.");
+	public ResponseEntity<String> changePassword(
+			@Valid @RequestBody ChangePasswordRequest request,
+			HttpSession session) {
+
+		Long userId = (Long) session.getAttribute("USER_ID");
+		if (userId == null) {
+			return ResponseEntity.status(401).body("Unauthorized");
+		}
+
+		userService.changePassword(
+				userId,
+				request.getOldPassword(),
+				request.getNewPassword());
+
+		return ResponseEntity.ok("Password changed successfully");
 	}
 }

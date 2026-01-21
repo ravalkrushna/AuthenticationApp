@@ -8,7 +8,7 @@ public class SessionUtil {
 	public static void createSession(HttpServletRequest request , Long userId) {
 		HttpSession session = request.getSession(true);
 		session.setAttribute(SessionConstants.USER_ID, userId);
-		session.setMaxInactiveInterval(1 * 60); 
+		session.setMaxInactiveInterval(10 * 60);
 	}
 	
 	public static Long getUserId(HttpSession session) {
