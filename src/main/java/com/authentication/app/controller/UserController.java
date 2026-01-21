@@ -120,4 +120,19 @@ public class UserController {
 		userService.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
 		return ResponseEntity.ok("Password reset successfully");
 	}
+
+	@PostMapping("/logout")
+	public ResponseEntity<String> logout(HttpServletRequest request , HttpServletResponse response){
+		HttpSession session = request.getSession(false);
+
+		if(session != null){
+			session.invalidate();
+		}
+		Cookie cookie = new Cookie("USER_EMAIL" , null);
+		cookie.setPath("/");
+		cookie.setMaxAge(0);
+		response.addCookie(cookie);
+
+		return ResponseEntity.ok("Logged out successfully");
+	}
 }
