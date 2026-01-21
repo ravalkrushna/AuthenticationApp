@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.authentication.app.model.dao.UserDao;
 import com.authentication.app.service.UserService;
-import com.authentication.app.utils.SessionUtil;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
