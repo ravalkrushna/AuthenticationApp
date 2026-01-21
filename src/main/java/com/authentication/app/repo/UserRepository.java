@@ -2,6 +2,7 @@ package com.authentication.app.repo;
 
 import com.authentication.app.model.dao.UserDao;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -80,6 +81,25 @@ public class UserRepository {
                 "update users set password = ? where id = ?",
                 encodedPassword,
                 id
+        );
+    }
+
+    public void updateOtp(String email , String otp , LocalDateTime otpExpiry) {
+        jdbcTemplate.update(
+            "update users set otp = ? , otp_expiry = ? where email = ?",
+            otp,
+            otpExpiry,
+            email
+        );
+    }
+
+    public void updatePasswordAndClearOtp(
+            String email,
+            String encodedPassword) {
+
+        jdbcTemplate.update(
+                "update users set password = ?, otp = null, otp_expiry = null where email = ?",
+                encodedPassword, email
         );
     }
 

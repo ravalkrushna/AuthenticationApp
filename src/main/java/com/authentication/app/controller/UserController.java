@@ -1,6 +1,6 @@
 package com.authentication.app.controller;
 
-import com.authentication.app.model.dto.ChangePasswordRequest;
+import com.authentication.app.model.dto.*;
 import com.authentication.app.utils.SessionRegistry;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -11,12 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.authentication.app.model.dao.UserDao;
-import com.authentication.app.model.dto.LoginRequest;
-import com.authentication.app.model.dto.OtpRequest;
-import com.authentication.app.model.dto.RegisterRequest;
 import com.authentication.app.service.UserService;
 import com.authentication.app.utils.SessionUtil;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -111,5 +107,17 @@ public class UserController {
 				request.getNewPassword());
 
 		return ResponseEntity.ok("Password changed successfully");
+	}
+
+	@PostMapping("/forgotpassword")
+	public ResponseEntity<String> forgotPassword(@RequestBody RegisterRequest request){
+		userService.sendForgetPasswordOtp(request.getEmail());
+		return ResponseEntity.ok("OTP sent to email");
+	}
+
+	@PostMapping("/resetpassword")
+	public ResponseEntity<String> resetPassword(@RequestBody ResetPasswordRequest request) {
+		userService.resetPassword(request.getEmail(), request.getOtp(), request.getNewPassword());
+		return ResponseEntity.ok("Password reset successfully");
 	}
 }

@@ -98,5 +98,30 @@ public class UserService {
         userRepo.updatePassword(userId, encoded);
     }
 
+    public void resetPassword(String email , String otp , String newPassword){
+        UserDao user = userRepo.findByEmail(email)
+            .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
+        if (!user.getOtp().equals(otp)) {
+            throw new IllegalArgumentException("Invalid OTP");
+        }
+
+        if (user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("OTP expired");
+        }
+
+        String encoded = passwordEncoder.encode(newPassword);
+        userRepo.updatePassword(user.getId(), encoded);
+    }
+
+    public void sendForgetPasswordOtp(String email) {
+        UserDao user = userRepo.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        String otp = OtpUtil.generateOtp();
+
+        userRepo.updateOtp(email , otp , LocalDateTime.now().plusMinutes(10));
+
+        emailUtil.sendOtpEmail(email, otp);
+    }
 }
