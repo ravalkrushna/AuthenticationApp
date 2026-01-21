@@ -25,4 +25,9 @@ public class SessionRegistry {
             }
         }
     }
+
+    public static synchronized Set<String> getSessions(Long userId) {
+        return new HashSet<>(store.getOrDefault(userId, Set.of()));
+    }
+
 }

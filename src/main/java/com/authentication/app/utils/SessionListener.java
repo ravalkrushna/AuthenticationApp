@@ -9,12 +9,19 @@ import jakarta.servlet.http.HttpSessionListener;
 public class SessionListener implements HttpSessionListener {
 
     @Override
+    public void sessionCreated(HttpSessionEvent event) {
+        SessionStore.add(event.getSession());
+    }
+
+    @Override
     public void sessionDestroyed(HttpSessionEvent event) {
         HttpSession session = event.getSession();
-        Long userId = (Long) session.getAttribute("USER_ID");
 
+        Long userId = (Long) session.getAttribute("USER_ID");
         if (userId != null) {
             SessionRegistry.remove(userId, session.getId());
         }
+
+        SessionStore.remove(session.getId());
     }
 }

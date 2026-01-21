@@ -1,5 +1,8 @@
 package com.authentication.app.service;
 
+import com.authentication.app.utils.SessionRegistry;
+import com.authentication.app.utils.SessionStore;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -96,6 +99,8 @@ public class UserService {
 
         String encoded = passwordEncoder.encode(newPassword);
         userRepo.updatePassword(userId, encoded);
+
+        invalidateAllSessions(userId);
     }
 
     public void resetPassword(String email , String otp , String newPassword){
@@ -124,4 +129,15 @@ public class UserService {
 
         emailUtil.sendOtpEmail(email, otp);
     }
+
+    public void invalidateAllSessions(Long userId) {
+
+        for (String sessionId : SessionRegistry.getSessions(userId)) {
+            HttpSession session = SessionStore.get(sessionId);
+            if (session != null) {
+                session.invalidate();
+            }
+        }
+    }
+
 }
