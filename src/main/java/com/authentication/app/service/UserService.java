@@ -115,7 +115,7 @@ public class UserService {
     }
 
     public void sendForgetPasswordOtp(String email) {
-        UserDao user = userRepo.findByEmail(email)
+        userRepo.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
 
         String otp = OtpUtil.generateOtp();
