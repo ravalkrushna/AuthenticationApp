@@ -1,6 +1,8 @@
 package com.authentication.app.controller;
 
+import com.authentication.app.model.dto.ChangePasswordRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,7 +16,9 @@ import com.authentication.app.model.dto.RegisterRequest;
 import com.authentication.app.service.UserService;
 import com.authentication.app.utils.SessionUtil;
 
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import jakarta.validation.Valid;
 
@@ -39,9 +43,15 @@ public class UserController {
 	}
 
 	@PostMapping("/login")
-	public ResponseEntity<String> userLogin(@Valid @RequestBody LoginRequest request , HttpServletRequest httprequest) {
+	public ResponseEntity<String> userLogin(@Valid @RequestBody LoginRequest request , HttpServletRequest httprequest , HttpServletResponse response) {
 		UserDao user = userService.loginUser(request.getEmail(), request.getPassword());
 		SessionUtil.createSession(httprequest, user.getId());
+		
+		Cookie userCookie = new Cookie("USER_EMAIL",user.getEmail());
+		userCookie.setHttpOnly(true);
+		userCookie.setPath("/");
+		userCookie.setMaxAge(5 * 60);
+		response.addCookie(userCookie);
 		return ResponseEntity.ok("Login successful.");		
 	}
 	
@@ -61,4 +71,21 @@ public class UserController {
 	    return ResponseEntity.ok("Session active");
 	}
 
+	@GetMapping("/read-cookie")
+	public ResponseEntity<String> readCookie(
+	        @CookieValue(value = "USER_EMAIL", required = false) String email) {
+
+	    if (email == null) {
+	        return ResponseEntity.status(401).body("Cookie not found");
+	    }
+
+	    return ResponseEntity.ok("Cookie value: " + email);
+	}
+
+	@PostMapping("/change-password")
+	public ResponseEntity<String> changePassword(@Valid @RequestBody ChangePasswordRequest request , HttpSession session){
+		String email = session .getAttribute("USER_EMAIL").toString();
+		userService.changePassword(email, request.getOldPassword(), request.getNewPassword());
+		return ResponseEntity.ok("Password changed successfully.");
+	}
 }

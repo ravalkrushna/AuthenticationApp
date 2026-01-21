@@ -1,9 +1,7 @@
 package com.authentication.app.service;
 
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDateTime;
-
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import com.authentication.app.model.dao.UserDao;
 import com.authentication.app.repo.UserRepository;
@@ -78,6 +76,20 @@ public class UserService {
         }
         
         return user;
-    }    
+    }
+
+    public void changePassword(String email , String oldPassword , String newPassword){
+        UserDao user = userRepo.findByEmail(email).orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if(!passwordEncoder.matches(oldPassword , user.getPassword())){
+            throw new IllegalArgumentException("old password is incorrect");
+        }
+        if(passwordEncoder.matches(oldPassword , user.getPassword())){
+            throw new IllegalArgumentException("Password is same as before");
+        }
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepo.saveUser(user);
+    }
    
 }
