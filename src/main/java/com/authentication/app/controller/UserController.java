@@ -1,6 +1,8 @@
 package com.authentication.app.controller;
 
 import com.authentication.app.model.dto.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -72,4 +74,22 @@ public class UserController {
 		);
 		return ResponseEntity.ok("Password reset successfully");
 	}
+
+	@PostMapping("/logout")
+	public ResponseEntity<String> logout(HttpServletRequest request) {
+
+		String authHeader = request.getHeader("Authorization");
+		System.out.println("Authorization header = " + authHeader);
+
+		if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+			return ResponseEntity.badRequest().body("No token provided");
+		}
+
+		String token = authHeader.substring(7);
+		userService.logout(token);
+
+		return ResponseEntity.ok("Logged out successfully");
+	}
+
 }
+

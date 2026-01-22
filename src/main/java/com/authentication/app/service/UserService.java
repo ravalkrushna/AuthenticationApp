@@ -1,6 +1,7 @@
 package com.authentication.app.service;
 
 
+import com.authentication.app.repo.TokenBlacklistRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -14,6 +15,7 @@ import com.authentication.app.security.JwtUtil;
 @Service
 public class UserService {
 
+    private final TokenBlacklistRepository tokenBlacklistRepository;
     private final UserRepository userRepo;
     private final EmailUtil emailUtil;
     private final BCryptPasswordEncoder passwordEncoder;
@@ -22,8 +24,10 @@ public class UserService {
     public UserService(
             UserRepository userRepo,
             EmailUtil emailUtil,
-            JwtUtil jwtUtil
+            JwtUtil jwtUtil,
+            TokenBlacklistRepository tokenBlacklistRepository
     ) {
+        this.tokenBlacklistRepository = tokenBlacklistRepository;
         this.userRepo = userRepo;
         this.emailUtil = emailUtil;
         this.jwtUtil = jwtUtil;
@@ -130,4 +134,9 @@ public class UserService {
         userRepo.updateOtp(email, otp, LocalDateTime.now().plusMinutes(10));
         emailUtil.sendOtpEmail(email, otp);
     }
+
+    public void logout(String token) {
+        tokenBlacklistRepository.revokeToken(token);
+    }
+
 }

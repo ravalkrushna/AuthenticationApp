@@ -1,6 +1,7 @@
 package com.authentication.app.security;
 
 import com.authentication.app.model.dao.UserDao;
+import com.authentication.app.repo.TokenBlacklistRepository;
 import com.authentication.app.repo.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -19,10 +20,12 @@ import java.util.Collections;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+    private final TokenBlacklistRepository tokenBlacklistRepository;
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
 
-    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserRepository userRepository) {
+    public JwtAuthenticationFilter(JwtUtil jwtUtil, UserRepository userRepository , TokenBlacklistRepository tokenBlacklistRepository) {
+        this.tokenBlacklistRepository = tokenBlacklistRepository;
         this.jwtUtil = jwtUtil;
         this.userRepository = userRepository;
     }
@@ -43,6 +46,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
+        if (tokenBlacklistRepository.isTokenRevoked(token)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         if (!jwtUtil.isTokenValid(token)) {
             filterChain.doFilter(request, response);
             return;
@@ -55,6 +63,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             UserDao user = userRepository.findByEmail(email).orElse(null);
 
             if (user != null) {
+
                 User principal = new User(
                         user.getEmail(),
                         user.getPassword(),
@@ -78,4 +87,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         filterChain.doFilter(request, response);
     }
+
 }
