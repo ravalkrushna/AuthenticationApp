@@ -28,6 +28,7 @@ public class SecurityConfig {
                         .requestMatchers(
                                 "/users/auth/login",
                                 "/users/auth/signup",
+                                "users/auth/logout",
                                 "/users/auth/verifyotp",
                                 "/users/auth/forgotpassword",
                                 "/users/auth/resetpassword"

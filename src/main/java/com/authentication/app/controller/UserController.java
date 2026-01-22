@@ -2,7 +2,6 @@ package com.authentication.app.controller;
 
 import com.authentication.app.model.dto.*;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
