@@ -103,4 +103,9 @@ public class UserRepository {
         );
     }
 
+    public Optional<UserDao> findByUsername(String username) {
+        return findByEmail(username);
+    }
+
+
 }
